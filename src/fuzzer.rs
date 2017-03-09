@@ -105,7 +105,7 @@ impl Fuzzer {
             let child = child.clone();
             thread::spawn(move || {
                 let mut skipped = 0;
-                while skipped <= lost {
+                while skipped < lost {
                     thread::sleep(heartbeat);
                     if let Some(state) = state.lock().unwrap().take() {
                         if state == Instance::Stopped {
