@@ -52,17 +52,18 @@ impl Fuzzer {
     }
 
     fn build(&self) -> Result<()> {
-        let status = Command::new("cargo")
+        let child = Command::new("cargo")
             .arg("build")
-            .stderr(Stdio::null())
-            .stdout(Stdio::null())
-            .status()
+            .output()
             .expect("failed to build");
 
-        if status.success() {
+        if child.status.success() {
             Ok(())
         } else {
-            Err(Error::new(ErrorKind::Other, "failed to build instance"))
+            let stderr= format!("STDERR: \n {}", String::from_utf8_lossy(&child.stderr));
+            let stdout = format!("STDOUT: \n {}", String::from_utf8_lossy(&child.stdout));
+            println!("{}\n{}", stderr, stdout);
+            Err(Error::new(ErrorKind::Other, "failed to build instance\n\n"))
         }
     }
 

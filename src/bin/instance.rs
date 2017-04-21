@@ -7,7 +7,7 @@ use std::env;
 
 use bincode_fuzz::random::*;
 use bincode_fuzz::util::heartbeat;
-use bincode::{serialize, deserialize, SizeLimit};
+use bincode::{serialize, deserialize, deserialize_from, Infinite};
 
 include!(concat!(env!("OUT_DIR"), "/type.rs"));
 
@@ -15,20 +15,22 @@ fn perform_serializations<R: Rng>(rng: &mut R, n: usize) {
     for _ in 0..n {
         heartbeat();
         let original: Test = rng.gen();
-        let encoded: Vec<u8> = serialize(&original, SizeLimit::Infinite).unwrap();
+        let encoded: Vec<u8> = serialize(&original, Infinite).unwrap();
         let decoded: Test = deserialize(&encoded[..]).unwrap();
+        let decoded_reader: Test = deserialize_from(&mut &encoded[..], Infinite).unwrap();
         assert_eq!(decoded, original);
+        assert_eq!(decoded, decoded_reader);
     }
 }
 
 fn perform_mutations<R: Rng>(rng: &mut R, n: usize) {
-    let mut buffer = serialize(&rng.gen::<Test>(), SizeLimit::Infinite).unwrap();
+    let mut buffer = serialize(&rng.gen::<Test>(), Infinite).unwrap();
     for _ in 0..n {
         heartbeat();
         mutate_bytes(rng, &mut buffer);
         let _ = deserialize::<Test>(&buffer[..]).is_ok();
         if buffer.is_empty() || (rng.next_u32() & 0xfff) == 0 {
-            buffer = serialize(&rng.gen::<Test>(), SizeLimit::Infinite).unwrap();
+            buffer = serialize(&rng.gen::<Test>(), Infinite).unwrap();
         }
     }
 }
