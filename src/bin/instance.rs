@@ -7,7 +7,7 @@ use std::env;
 
 use bincode_fuzz::random::*;
 use bincode_fuzz::util::heartbeat;
-use bincode::{serialize, deserialize, Infinite};
+use bincode::{serialize, deserialize, deserialize_from, Infinite};
 
 include!(concat!(env!("OUT_DIR"), "/type.rs"));
 
@@ -17,7 +17,9 @@ fn perform_serializations<R: Rng>(rng: &mut R, n: usize) {
         let original: Test = rng.gen();
         let encoded: Vec<u8> = serialize(&original, Infinite).unwrap();
         let decoded: Test = deserialize(&encoded[..]).unwrap();
+        let decoded_reader: Test = deserialize_from(&mut &encoded[..], Infinite).unwrap();
         assert_eq!(decoded, original);
+        assert_eq!(decoded, decoded_reader);
     }
 }
 
